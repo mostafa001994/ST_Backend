@@ -66,6 +66,11 @@ class MakeModule extends Command
         $configPath = "{$base}/Config/" . strtolower($name) . ".php";
         $this->files->put($configPath, "<?php\n\nreturn [\n    'example' => true,\n];\n");
 
+        // Create sample migration
+        $migrationPath = "{$base}/Database/Migrations/" . date('Y_m_d_His') . "_create_" . strtolower($name) . "s_table.php";
+        $migrationStub = $this->getMigrationStub($name);
+        $this->files->put($migrationPath, $migrationStub);
+
         $this->info("Module {$name} created successfully under app/Modules/{$name}.");
         $this->info("Run composer dump-autoload if needed.");
         return 0;
@@ -148,6 +153,34 @@ class {$name} extends Model
     protected \$table = strtolower('{$name}s');
     protected \$fillable = [];
 }
+PHP;
+    }
+
+    protected function getMigrationStub($name)
+    {
+        $table = strtolower($name) . 's';
+        return <<<PHP
+<?php
+use Illuminate\\Database\\Migrations\\Migration;
+use Illuminate\\Database\\Schema\\Blueprint;
+use Illuminate\\Support\\Facades\\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('{$table}', function (Blueprint \$table) {
+            \$table->id();
+            \$table->string('name')->nullable();
+            \$table->timestamps();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('{$table}');
+    }
+};
 PHP;
     }
 }
